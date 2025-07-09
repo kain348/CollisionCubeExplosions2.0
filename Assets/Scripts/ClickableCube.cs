@@ -4,14 +4,13 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(Collider))]
 [RequireComponent(typeof(Renderer))]
-
-public class ClickableObject : MonoBehaviour
+public class ClickableCube : MonoBehaviour
 {
     [Header("Prefab Defaults (For Editor Only)")]
-    [SerializeField] private Vector3 _prefabDefaultPosition = Vector3.zero;
-    [SerializeField] private Vector3 _prefabDefaultSize = Vector3.one;
-    [SerializeField] private Material _prefabDefaultMaterial;
-    [SerializeField, Range(0, 100)] private int _prefabSplitChance = 100;
+    [field: SerializeField] private Vector3 _prefabDefaultPosition = Vector3.zero;
+    [field: SerializeField] private Vector3 _prefabDefaultSize = Vector3.one;
+    [field: SerializeField] private Material _prefabDefaultMaterial;
+    [field: SerializeField, Range(0, 100)] private int _prefabSplitChance = 100;
 
     private Renderer _cachedRenderer;
     private Rigidbody _cachedRigidbody;
@@ -49,8 +48,6 @@ public class ClickableObject : MonoBehaviour
 
     public int SplitChance { get; private set; }
 
-    public event System.Action<ClickableObject> OnObjectClicked;
-
     private void Awake()
     {
         _cachedRenderer = GetComponent<Renderer>();
@@ -66,19 +63,5 @@ public class ClickableObject : MonoBehaviour
         Size = size;
         Material = material;
         SplitChance = splitChance;
-    }
-            
-    private void OnValidate()
-    {
-        if (!Application.isPlaying)
-        {            
-            transform.position = _prefabDefaultPosition;
-            transform.localScale = _prefabDefaultSize;
-
-            if (_prefabDefaultMaterial != null)
-            {
-                GetComponent<Renderer>().material = _prefabDefaultMaterial;
-            }
-        }
     }
 }

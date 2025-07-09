@@ -1,34 +1,68 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
-internal class ObjectCreator : MonoBehaviour
+internal class CubeSpawner : MonoBehaviour
 {
     [Header("Spawn Settings")]
     [SerializeField, Min(2)] private int _minCount = 2;
     [SerializeField, Min(2)] private int _maxCount = 4;
     [SerializeField, Min(1)] private float _sizeReduction = 2f;
-    [SerializeField, Min(0.1f)] private float _spawnRadius = 1f;
     [SerializeField] private int _splitChanceDivider = 2;
 
     [Header("Resources")]
-    [SerializeField] private ClickableObject _objectPrefab;
+    [SerializeField] private RaycastClickHandler _clickHandler;
+    [SerializeField] private Exploder _exploder;
+    [SerializeField] private ClickableCube _cubePrefab;
     [SerializeField] private List<Material> _materials = new List<Material>();
 
-    public List<ClickableObject> CreateFragments(ClickableObject original)
-    {
-        if (!_objectPrefab)
-        {
-            Debug.LogError("Prefab not assigned!", this);
+    private float _spawnRadius = 1f;
 
-            return new List<ClickableObject>();
-        }
-               
-        return CreateNewFragments(original);        
+    private void OnEnable()
+    {
+        _clickHandler.ClickableCubeClicked += HandleObjectClick;
     }
 
-    private List<ClickableObject> CreateNewFragments(ClickableObject original)
+    private void OnDisable()
     {
-        List<ClickableObject> fragments = new List<ClickableObject>();
+        _clickHandler.ClickableCubeClicked -= HandleObjectClick;
+    }
+
+    private void HandleObjectClick(ClickableCube clickedCube)
+    {
+        if (clickedCube == null) 
+            return;
+
+        if (ShouldSplit(clickedCube.SplitChance))
+        {
+            List<ClickableCube> clickableCube = CreateNewFragments(clickedCube);
+
+            List<Rigidbody> rigidbodies = TryGetRigidbodies(clickableCube);
+
+            if(rigidbodies != null)
+            {
+                _exploder.Explode(clickedCube.Position, clickedCube.Size, rigidbodies);
+            }
+        }
+        else
+        {
+            _exploder.Explode(clickedCube.Position, clickedCube.Size);
+        }
+
+        Destroy(clickedCube.gameObject);
+    }
+
+    private List<Rigidbody> TryGetRigidbodies(List<ClickableCube> clickableCube)
+    {
+        return clickableCube
+            .Select(clickable => clickable.ObjectRigidbody)
+            .Where(rigidbody => rigidbody != null)
+            .ToList();
+    }
+
+    private List<ClickableCube> CreateNewFragments(ClickableCube original)
+    {
+        List<ClickableCube> fragments = new List<ClickableCube>();
 
         int count = Random.Range(_minCount, _maxCount + 1);
         Vector3 newSize = original.Size / _sizeReduction;
@@ -40,7 +74,7 @@ internal class ObjectCreator : MonoBehaviour
 
             var fragment = CreateFragment(spawnPosition, newSize, original.Material, newSplitChance);
 
-            if (fragment.TryGetComponent<ClickableObject>(out var newObject))
+            if (fragment.TryGetComponent<ClickableCube>(out var newObject))
             {
                 fragments.Add(newObject);
             }
@@ -49,10 +83,10 @@ internal class ObjectCreator : MonoBehaviour
         return fragments;
     }
 
-    private ClickableObject CreateFragment(Vector3 position, Vector3 size, Material originalMaterial, int splitChance)
+    private ClickableCube CreateFragment(Vector3 position, Vector3 size, Material originalMaterial, int splitChance)
     {
-        ClickableObject newObject = Instantiate(
-            _objectPrefab,
+        ClickableCube newObject = Instantiate(
+            _cubePrefab,
             position,
             Quaternion.identity
         );
@@ -87,5 +121,14 @@ internal class ObjectCreator : MonoBehaviour
     private Material CreateRandomMaterial()
     {
         return new Material(Shader.Find("Standard")) { color = Random.ColorHSV() };
+    }
+
+    private bool ShouldSplit(int chanceToSplit)
+    {
+        int minRandom = 1;
+        int maxRandom = 100;
+
+        Debug.Log("split chance - " + chanceToSplit);
+        return chanceToSplit >= Random.Range(minRandom, maxRandom + 1);
     }
 }

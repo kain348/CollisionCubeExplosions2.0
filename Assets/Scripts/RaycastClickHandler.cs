@@ -5,7 +5,7 @@ internal class RaycastClickHandler : MonoBehaviour
     [SerializeField] private LayerMask clickableLayer;
     [SerializeField] private Camera mainCamera;
 
-    public event System.Action<ClickableObject> ClickableObjectClicked;
+    public event System.Action<ClickableCube> ClickableCubeClicked;
 
     private void Awake()
     {
@@ -21,9 +21,9 @@ internal class RaycastClickHandler : MonoBehaviour
 
             if (Physics.Raycast(ray, out RaycastHit hit, Mathf.Infinity, clickableLayer))
             {
-                if (hit.collider.TryGetComponent<ClickableObject>(out var clickable))
+                if (hit.collider.TryGetComponent(out ClickableCube clickable))
                 {
-                    ClickableObjectClicked?.Invoke(clickable);
+                    ClickableCubeClicked?.Invoke(clickable);
                 }
             }
         }
