@@ -5,6 +5,8 @@ internal class RaycastClickHandler : MonoBehaviour
     [SerializeField] private LayerMask clickableLayer;
     [SerializeField] private Camera mainCamera;
 
+    const int CommandMouseLeftKey = 0;
+
     public event System.Action<ClickableCube> ClickableCubeClicked;
 
     private void Awake()
@@ -15,7 +17,7 @@ internal class RaycastClickHandler : MonoBehaviour
 
     private void Update()
     {
-        if (Input.GetMouseButtonUp(0))
+        if (Input.GetMouseButtonUp(CommandMouseLeftKey))
         {
             Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
 
